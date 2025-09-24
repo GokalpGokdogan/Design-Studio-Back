@@ -8,6 +8,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not found', path: req.originalUrl });
+});
+
+app.get('/', (req, res) => {
+  res.send('API is running. Try /api endpoints.');
+});
+
+
 // routes
 app.use('/api', designRoutes);
 
