@@ -1,8 +1,8 @@
 {
   "type": "json_schema",
   "json_schema": {
-    "name": "ui_design_spec_dsl",
-    "description": "Structured UI design using a layout DSL (row/stack/grid/box/component) plus figmaTokens and optional floating overlays.",
+    "name": "modern_ui_design_spec",
+    "description": "Professional UI design system with sophisticated components and design tokens",
     "schema": {
       "type": "object",
       "additionalProperties": false,
@@ -12,24 +12,72 @@
           "additionalProperties": false,
           "properties": {
             "title": { "type": "string" },
-            "prompt": { "type": "string" }
+            "prompt": { "type": "string" },
+            "designSystem": {
+              "type": "string",
+              "enum": ["minimal", "corporate", "startup", "creative", "saas"]
+            },
+            "colorTheme": {
+              "type": "string",
+              "enum": ["blue", "purple", "green", "orange", "neutral", "brand"]
+            }
           },
           "required": ["title", "prompt"]
+        },
+        "figmaTokens": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "color": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "value": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }
+                },
+                "required": ["value"]
+              }
+            },
+            "typography": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "fontFamily": { "type": "string" },
+                  "fontWeight": { "type": "number" },
+                  "fontSize": { "type": "number" },
+                  "lineHeight": { "type": "number" },
+                  "letterSpacing": { "type": "string" }
+                },
+                "required": [
+                  "fontFamily",
+                  "fontWeight",
+                  "fontSize",
+                  "lineHeight"
+                ]
+              }
+            },
+            "spacing": {
+              "type": "object",
+              "additionalProperties": { "type": "number" }
+            },
+            "borderRadius": {
+              "type": "object",
+              "additionalProperties": { "type": "number" }
+            },
+            "shadow": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            }
+          },
+          "required": ["color", "typography", "spacing", "borderRadius"]
         },
         "artboard": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "width": {
-              "type": "number",
-              "minimum": 300,
-              "maximum": 4096
-            },
-            "height": {
-              "type": "number",
-              "minimum": 300,
-              "maximum": 4096
-            },
+            "width": { "type": "number", "minimum": 320, "maximum": 1920 },
+            "height": { "type": "number", "minimum": 480, "maximum": 4096 },
             "background": { "type": "string" }
           },
           "required": ["width", "height", "background"]
@@ -40,12 +88,25 @@
           "items": { "$ref": "#/$defs/floatingNode" }
         }
       },
-      "required": ["meta", "artboard", "tree"],
+      "required": ["meta", "figmaTokens", "artboard", "tree"],
       "$defs": {
         "style": {
           "type": "object",
-          "description": "Inline style using tokens where applicable.",
-          "additionalProperties": true
+          "description": "Enhanced styling with design tokens",
+          "additionalProperties": true,
+          "properties": {
+            "background": { "type": "string" },
+            "color": { "type": "string" },
+            "font": { "type": "string" },
+            "padding": { "type": ["string", "number"] },
+            "margin": { "type": ["string", "number"] },
+            "borderRadius": { "type": ["string", "number"] },
+            "shadow": { "type": "string" },
+            "border": { "type": "string" },
+            "width": { "type": ["string", "number"] },
+            "height": { "type": ["string", "number"] },
+            "opacity": { "type": "number" }
+          }
         },
         "componentRole": {
           "type": "string",
@@ -54,17 +115,46 @@
             "paragraph",
             "button",
             "input",
-            "img",
-            "svg",
+            "textarea",
+            "select",
+            "checkbox",
+            "radio",
+            "toggle",
+            "slider",
+            "date-picker",
+            "file-upload",
+            "navbar",
+            "sidebar",
+            "breadcrumb",
+            "tabs",
+            "pagination",
+            "table",
             "card",
-            "link",
-            "divider",
             "stats",
             "metric",
-            "table",
+            "chart",
+            "timeline",
             "badge",
+            "tag",
             "avatar",
-            "progress"
+            "progress",
+            "alert",
+            "toast",
+            "modal",
+            "tooltip",
+            "skeleton",
+            "empty-state",
+            "hero",
+            "feature-grid",
+            "testimonial",
+            "pricing",
+            "cta",
+            "image",
+            "icon",
+            "link",
+            "divider",
+            "spacer",
+            "video"
           ]
         },
         "component": {
@@ -74,7 +164,47 @@
             "type": { "const": "component" },
             "role": { "$ref": "#/$defs/componentRole" },
             "content": { "type": "string" },
-            "props": { "type": "object" },
+            "props": {
+              "type": "object",
+              "properties": {
+                "variant": { "type": "string" },
+                "size": {
+                  "type": "string",
+                  "enum": ["xs", "sm", "md", "lg", "xl"]
+                },
+                "state": {
+                  "type": "string",
+                  "enum": ["default", "hover", "focus", "disabled", "loading"]
+                },
+                "icon": { "type": "string" },
+                "iconPosition": { "type": "string", "enum": ["left", "right"] },
+                "label": { "type": "string" },
+                "placeholder": { "type": "string" },
+                "helperText": { "type": "string" },
+                "error": { "type": "boolean" },
+                "required": { "type": "boolean" },
+                "disabled": { "type": "boolean" },
+                "loading": { "type": "boolean" },
+                "href": { "type": "string" },
+                "target": { "type": "string" },
+                "alt": { "type": "string" },
+                "src": { "type": "string" },
+                "items": { "type": "array" },
+                "headers": { "type": "array", "items": { "type": "string" } },
+                "rows": { "type": "array" },
+                "value": { "type": ["string", "number"] },
+                "max": { "type": "number" },
+                "min": { "type": "number" },
+                "step": { "type": "number" },
+                "options": { "type": "array" },
+                "multiple": { "type": "boolean" },
+                "searchable": { "type": "boolean" },
+                "bordered": { "type": "boolean" },
+                "shadow": { "type": "boolean" },
+                "rounded": { "type": "boolean" },
+                "fullWidth": { "type": "boolean" }
+              }
+            },
             "style": { "$ref": "#/$defs/style" }
           },
           "required": ["type", "role"]
@@ -84,14 +214,16 @@
           "properties": {
             "gap": { "type": ["string", "number"] },
             "padding": { "type": ["string", "number"] },
+            "margin": { "type": ["string", "number"] },
             "align": {
               "type": "string",
               "enum": ["start", "center", "end", "stretch"]
             },
             "justify": {
               "type": "string",
-              "enum": ["start", "center", "end", "between"]
+              "enum": ["start", "center", "end", "between", "around", "evenly"]
             },
+            "wrap": { "type": "boolean" },
             "style": { "$ref": "#/$defs/style" },
             "children": {
               "type": "array",
@@ -118,10 +250,7 @@
               "type": "object",
               "properties": {
                 "type": { "const": "stack" },
-                "direction": {
-                  "type": "string",
-                  "enum": ["column", "row"]
-                }
+                "direction": { "type": "string", "enum": ["column", "row"] }
               },
               "required": ["type"]
             }
@@ -138,21 +267,11 @@
                   "type": "object",
                   "additionalProperties": false,
                   "properties": {
-                    "base": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 12
-                    },
-                    "md": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 12
-                    },
-                    "lg": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 12
-                    }
+                    "base": { "type": "integer", "minimum": 1, "maximum": 12 },
+                    "sm": { "type": "integer", "minimum": 1, "maximum": 12 },
+                    "md": { "type": "integer", "minimum": 1, "maximum": 12 },
+                    "lg": { "type": "integer", "minimum": 1, "maximum": 12 },
+                    "xl": { "type": "integer", "minimum": 1, "maximum": 12 }
                   },
                   "required": ["base"]
                 }
@@ -171,13 +290,28 @@
             }
           ]
         },
+        "section": {
+          "allOf": [
+            { "$ref": "#/$defs/containerBase" },
+            {
+              "type": "object",
+              "properties": {
+                "type": { "const": "section" },
+                "maxWidth": { "type": "string" },
+                "centered": { "type": "boolean" }
+              },
+              "required": ["type"]
+            }
+          ]
+        },
         "node": {
           "oneOf": [
             { "$ref": "#/$defs/component" },
             { "$ref": "#/$defs/row" },
             { "$ref": "#/$defs/stack" },
             { "$ref": "#/$defs/grid" },
-            { "$ref": "#/$defs/box" }
+            { "$ref": "#/$defs/box" },
+            { "$ref": "#/$defs/section" }
           ]
         },
         "floatingNode": {
