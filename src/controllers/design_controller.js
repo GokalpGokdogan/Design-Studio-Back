@@ -1,5 +1,5 @@
 const Groq = require('groq-sdk');
-const SYSTEM_PROMPT = require('../models/design_system_prompt');
+const SYSTEM_PROMPT = require('../models/design_system_prompt_json');
 const RESPONSE_FORMAT = require('../models/LLM_json_format.json')
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "" });
