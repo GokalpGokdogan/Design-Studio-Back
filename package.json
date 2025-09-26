@@ -1,5 +1,5 @@
 {
-  "name": "polymet-case-back",
+  "name": "design-studio-back",
   "version": "1.0.0",
   "description": "UI/UX design generator API powered by Groq",
   "main": "src/index.js",
