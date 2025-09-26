@@ -1,7 +1,6 @@
 const Groq = require('groq-sdk');
 const SYSTEM_PROMPT = require('../models/practical_prompt');
 const RESPONSE_FORMAT = require('../models/LLM_json_format.json');
-const { createAdvancedPrompt } = require('../models/enhanced_prompt');
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "" });
 
@@ -13,7 +12,6 @@ async function generateDesign(req, res) {
   }
   
   const model = 'meta-llama/llama-4-scout-17b-16e-instruct'; // 'groq/compound-mini';
-  const enhancedPrompt = createAdvancedPrompt(prompt);
   console.log(SYSTEM_PROMPT)
   // const response = await groq.chat.completions.create({
   //   messages: [
