@@ -2,8 +2,12 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const designRoutes = require('./routes/design_route');
+const figmaExportRoutes = require('./routes/figma_export_routes')
+const connectDB = require('./config/database');
 
 const app = express();
+
+connectDB();
 
 app.use(cors());
 app.use(express.json());
@@ -18,6 +22,7 @@ app.get('/', (req, res) => {
 
 // routes
 app.use('/api', designRoutes);
+app.use('/api', figmaExportRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found', path: req.originalUrl });
