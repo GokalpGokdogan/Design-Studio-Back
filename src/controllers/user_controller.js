@@ -6,6 +6,26 @@ function newId(prefix) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+// Helper function to get cookie config based on environment
+const getCookieConfig = () => {
+  // If FRONTEND_URL exists, we're in production (deployed)
+  if (process.env.FRONTEND_URL) {
+    return {
+      httpOnly: true,
+      secure: true, 
+      sameSite: 'none',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    };
+  } else {
+    // Development mode - use old structure
+    return {
+      httpOnly: true,
+      sameSite: 'lax', 
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    };
+  }
+};
+
 // Create user (and set cookie)
 async function createUser(req, res) {
   try {
@@ -20,7 +40,7 @@ async function createUser(req, res) {
 
     const user = await User.create({ user_id, email, password_hash, project_ids: [] });
 
-    res.cookie('uid', user.user_id, { httpOnly: true, sameSite: 'lax' });
+    res.cookie('uid', user.user_id, getCookieConfig());
     res.json({ user_id: user.user_id, email: user.email, project_ids: user.project_ids, createdAt: user.createdAt });
   } catch (e) {
     console.error('createUser error:', e);
@@ -80,12 +100,8 @@ async function loginUser(req, res) {
     const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) return res.status(401).json({ error: 'Invalid email or password' });
 
-    // issue cookie
-    res.cookie('uid', user.user_id, {
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+    // Use environment-based cookie config
+    res.cookie('uid', user.user_id, getCookieConfig());
 
     res.json({ user_id: user.user_id, email: user.email, project_ids: user.project_ids });
   } catch (e) {
