@@ -75,17 +75,110 @@ function convertNode(node, x = 0, y = 0, width = 300, height = 200, tokens = {})
   }
 }
 
+
 function convertSection(node, x, y, width, height, tokens) {
   // Section is like a container but with centering and max-width logic
-  const padding = resolveSpacing(node.padding, tokens) || 32;
   const maxWidth = node.maxWidth ? parseInt(node.maxWidth) : width;
   const actualWidth = Math.min(maxWidth, width);
   
-  // Center the section if needed
+  // Center the section if needed, calculating its absolute X position
   const sectionX = node.centered !== false ? x + (width - actualWidth) / 2 : x;
   
+  // Pass the calculated absolute X and the parent's Y to the container logic.
   return convertContainer(node, sectionX, y, actualWidth, height, 'vertical', tokens);
 }
+
+
+function convertContainer(node, x, y, width, height, direction, tokens) {
+  const children = node.children || [];
+  if (!children.length) return [];
+
+  const gap = resolveSpacing(node.gap, tokens) || 16;
+  const padding = resolveSpacing(node.padding, tokens) || 0;
+  const innerWidth = Math.max(width - (padding * 2), 50);
+  const innerHeight = Math.max(height - (padding * 2), 50);
+  const results = [];
+
+  if (direction === 'horizontal') {
+    const totalGap = gap * Math.max(children.length - 1, 0);
+    const availableWidth = Math.max(innerWidth - totalGap, 50);
+    let currentX = x + padding; // Use absolute positioning: parent's x + padding
+    const childY = y + padding;   // Use absolute positioning: parent's y + padding
+
+    children.forEach((child, index) => {
+      const itemWidth = Math.max(availableWidth / children.length, 50);
+      
+      const converted = convertNode(child, currentX, childY, itemWidth, innerHeight, tokens);
+      results.push(...converted);
+      
+      currentX += itemWidth + gap;
+    });
+  } else {
+    let currentY = y + padding;   // Absolute Y position, starting at the container's top plus padding
+    const containerX = x + padding;   // The starting X coordinate for the container's content
+    const containerWidth = Math.max(innerWidth, 50); // The available width for content
+
+    children.forEach((child, index) => {
+      let itemHeight = 50; // Default height
+      let itemWidth = containerWidth; // Default width is the full container width
+      let itemX = containerX; // Default X is the container's start X
+
+      // If the child is a component, calculate its specific dimensions and center it
+      if (child.type === 'component') {
+        const dimensions = calculateComponentDimensions(child.role, child.content, child.props || {}, containerWidth, innerHeight);
+        itemHeight = Math.max(dimensions.height, 50);
+        itemWidth = dimensions.width;
+        
+        // Calculate the centered X position for this specific component
+        itemX = containerX + (containerWidth - itemWidth) / 2;
+      } else {
+        // For nested containers (rows, stacks), calculate height differently
+        itemHeight = Math.max((innerHeight - gap * Math.max(children.length - 1, 0)) / children.length, 50);
+      }
+      
+      const converted = convertNode(child, itemX, currentY, itemWidth, itemHeight, tokens);
+      results.push(...converted);
+      
+      currentY += itemHeight + gap;
+    });
+  }
+
+  return results;
+}
+
+function convertGrid(node, x, y, width, height, tokens) {
+  const children = node.children || [];
+  const cols = node.cols?.base || 2;
+  const gap = resolveSpacing(node.gap, tokens) || 16;
+  const padding = resolveSpacing(node.padding, tokens) || 0;
+  
+  const innerWidth = Math.max(width - (padding * 2), 100);
+  const innerHeight = Math.max(height - (padding * 2), 100);
+  
+  const itemWidth = Math.max((innerWidth - (gap * (cols - 1))) / cols, 50);
+  const rows = Math.ceil(children.length / cols);
+  const itemHeight = rows > 0 ? Math.max((innerHeight - (gap * (rows - 1))) / rows, 50) : 50;
+  
+  const results = [];
+
+  children.forEach((child, index) => {
+    const col = index % cols;
+    const row = Math.floor(index / cols);
+
+    // Calculate position relative to the grid's content box
+    const relativeX = padding + (col * (itemWidth + gap));
+    const relativeY = padding + (row * (itemHeight + gap));
+
+    // Add parent's offset to get absolute position
+    const absoluteX = x + relativeX;
+    const absoluteY = y + relativeY;
+    
+    results.push(...convertNode(child, absoluteX, absoluteY, itemWidth, itemHeight, tokens));
+  });
+
+  return results;
+}
+
 
 function convertComponent(component, x, y, width, height, tokens) {
   const { role, content, props = {}, style = {} } = component;
@@ -497,85 +590,6 @@ function calculateComponentDimensions(role, content, props, containerWidth, cont
   }
 }
 
-function convertContainer(node, x, y, width, height, direction, tokens) {
-  const children = node.children || [];
-  if (!children.length) return [];
-
-  const gap = resolveSpacing(node.gap, tokens) || 16;
-  const padding = resolveSpacing(node.padding, tokens) || 0;
-  const innerWidth = width - (padding * 2);
-  const innerHeight = height - (padding * 2);
-  const results = [];
-
-  if (direction === 'horizontal') {
-    // For horizontal layout, calculate widths dynamically
-    const totalGap = gap * (children.length - 1);
-    const availableWidth = innerWidth - totalGap;
-    let currentX = x + padding;
-
-    children.forEach((child, index) => {
-      // Give each child equal width, but adjust based on content
-      const itemWidth = availableWidth / children.length;
-      const childY = y + padding;
-      
-      const converted = convertNode(child, currentX, childY, itemWidth, innerHeight, tokens);
-      results.push(...converted);
-      
-      currentX += itemWidth + gap;
-    });
-  } else {
-    // For vertical layout
-    let currentY = y + padding;
-    const childWidth = innerWidth;
-
-    children.forEach((child, index) => {
-      // Calculate height based on content
-      let itemHeight = 100; // Default height
-      
-      if (child.type === 'component') {
-        const dimensions = calculateComponentDimensions(child.role, child.content, child.props || {}, childWidth, innerHeight);
-        itemHeight = dimensions.height;
-      } else {
-        itemHeight = Math.max(innerHeight / children.length - gap, 50);
-      }
-
-      const converted = convertNode(child, x + padding, currentY, childWidth, itemHeight, tokens);
-      results.push(...converted);
-      
-      currentY += itemHeight + gap;
-    });
-  }
-
-  return results;
-}
-
-function convertGrid(node, x, y, width, height, tokens) {
-  const children = node.children || [];
-  const cols = node.cols?.base || 2;
-  const gap = resolveSpacing(node.gap, tokens) || 16;
-  const padding = resolveSpacing(node.padding, tokens) || 0;
-  
-  const innerWidth = width - (padding * 2);
-  const innerHeight = height - (padding * 2);
-  
-  const itemWidth = (innerWidth - (gap * (cols - 1))) / cols;
-  const rows = Math.ceil(children.length / cols);
-  const itemHeight = rows > 0 ? (innerHeight - (gap * (rows - 1))) / rows : innerHeight;
-  
-  const results = [];
-
-  children.forEach((child, index) => {
-    const col = index % cols;
-    const row = Math.floor(index / cols);
-    const childX = x + padding + (col * (itemWidth + gap));
-    const childY = y + padding + (row * (itemHeight + gap));
-    
-    results.push(...convertNode(child, childX, childY, itemWidth, itemHeight, tokens));
-  });
-
-  return results;
-}
-
 function applyCommonStyles(node, style, tokens) {
   // Background
   if (style.backgroundColor || style.background) {
@@ -675,7 +689,7 @@ function hexToRgba(hex) {
   } : { r: 0, g: 0, b: 0 };
 }
 
-// Export to Figma
+// Store design data in canonical format, convert to Figma on-demand
 async function exportToFigma(req, res) {
   try {
     const { designData, projectId } = req.body;
@@ -684,26 +698,45 @@ async function exportToFigma(req, res) {
       return res.status(400).json({ error: 'Design data and project ID are required' });
     }
 
-    console.log('Exporting design:', designData.meta?.title);
+    console.log('Exporting design in canonical format:', designData.meta?.title);
 
-    // Convert design to Figma format
-    const figmaData = convertToFigmaFormat(designData);
+    // Validate the design data structure
+    if (!designData.meta || !designData.artboard || !designData.tree) {
+      return res.status(400).json({ 
+        error: 'Invalid design data structure. Missing required fields.' 
+      });
+    }
 
     // Generate unique export ID
     const exportId = `export_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Save to MongoDB
+    // Store ONLY the canonical design data (no pre-conversion)
     const figmaExport = new FigmaExport({
       exportId,
-      figmaData,
-      designData,
+      designData: {
+        id: designData.meta.id || exportId,
+        data: {
+          figmaTokens: designData.figmaTokens || {},
+          artboard: designData.artboard,
+          tree: designData.tree,
+          floating: designData.floating || [],
+          meta: designData.meta
+        },
+        position: {
+          x: 100,
+          y: 100,
+          width: designData.artboard.width,
+          height: designData.artboard.height
+        },
+        timestamp: designData.meta.timestamp || Date.now()
+      },
       projectId,
       status: 'pending'
     });
     
     await figmaExport.save();
     
-    console.log('Export saved with ID:', exportId);
+    console.log('Design saved in canonical format with ID:', exportId);
 
     res.json({
       success: true,
@@ -720,14 +753,14 @@ async function exportToFigma(req, res) {
   }
 }
 
-// Get export data for Figma plugin
+// Convert canonical design data to Figma format on-demand
 async function getExportData(req, res) {
   try {
     const { exportId } = req.params;
     
-    console.log('Fetching export data for ID:', exportId);
+    console.log('Fetching and converting design data for ID:', exportId);
     
-    // Find export data in MongoDB
+    // Find the stored canonical design data
     const exportData = await FigmaExport.findOne({ exportId });
     
     if (!exportData) {
@@ -735,16 +768,28 @@ async function getExportData(req, res) {
       return res.status(404).json({ error: 'Export not found or expired' });
     }
 
-    console.log('Export data found:', exportData.exportId);
+    console.log('Canonical design data found, converting to Figma format...');
+    
+    let figmaData;
+    
+
+    figmaData = convertToFigmaFormat(exportData.designData.data);
+    
+    // Cache the conversion for future requests
+    exportData.figmaData = figmaData;
+    exportData.conversionVersion = 'v1';
+
     
     // Update status to exported
     exportData.status = 'exported';
     await exportData.save();
 
-    // Return the data in the format expected by the Figma plugin
+    console.log('Conversion completed successfully');
+
+    // Return in the format expected by the Figma plugin
     res.json({
       exportId: exportData.exportId,
-      figmaData: exportData.figmaData,
+      figmaData: figmaData,
       designData: exportData.designData,
       projectId: exportData.projectId,
       timestamp: exportData.createdAt
@@ -753,7 +798,7 @@ async function getExportData(req, res) {
   } catch (error) {
     console.error('Get export data error:', error);
     res.status(500).json({ 
-      error: 'Failed to retrieve export data: ' + error.message 
+      error: 'Failed to retrieve and convert export data: ' + error.message 
     });
   }
 }

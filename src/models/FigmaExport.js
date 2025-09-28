@@ -6,10 +6,6 @@ const figmaExportSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  figmaData: {
-    type: mongoose.Schema.Types.Mixed,
-    required: true
-  },
   designData: {
     type: mongoose.Schema.Types.Mixed,
     required: true
