@@ -227,7 +227,7 @@ function convertComponent(component, x, y, width, height, tokens) {
 
     case 'hero':
       return createHeroComponent(baseNode, content, props, style, tokens);
-      
+
     default:
       return createPlaceholderComponent(baseNode, role, content);
   }
@@ -419,7 +419,7 @@ function createCardComponent(baseNode, content, props, style, tokens) {
 
   return {
     ...baseNode,
-    type: 'RECTANGLE',
+    type: 'FRAME',
     fills: [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }],
     strokes: [{ type: 'SOLID', color: resolveColor('neutral-200', tokens) }],
     strokeWeight: 1,
@@ -502,7 +502,7 @@ function createHeroComponent(baseNode, content, props, style, tokens) {
 
   return {
     ...baseNode,
-    type: 'RECTANGLE',
+    type: 'FRAME',
     fills: [{ type: 'SOLID', color: hexToRgba('#f0f9ff') }],
     children
   };
@@ -511,7 +511,7 @@ function createHeroComponent(baseNode, content, props, style, tokens) {
 function createPlaceholderComponent(baseNode, role, content) {
   return {
     ...baseNode,
-    type: 'RECTANGLE',
+    type: 'FRAME',
     fills: [{ type: 'SOLID', color: { r: 0.95, g: 0.95, b: 0.95 } }],
     strokes: [{ type: 'SOLID', color: { r: 0.8, g: 0.8, b: 0.8 } }],
     strokeWeight: 2,
@@ -538,17 +538,20 @@ function createPlaceholderComponent(baseNode, role, content) {
 
 function calculateComponentDimensions(role, content, props, containerWidth, containerHeight) {
   switch (role) {
-    case 'heading':
+
+    case 'heading': {
       const level = props.level || 1;
       const fontSize = Math.max(32 - (level - 1) * 4, 16);
-      const textWidth = Math.min((content || 'Heading').length * fontSize * 0.6, containerWidth);
-      return { width: textWidth, height: fontSize * 1.2 };
+      return { width: containerWidth, height: fontSize * 1.2 };
+    }
 
-    case 'paragraph':
-      const textLength = (content || 'Paragraph').length;
-      const estimatedWidth = Math.min(textLength * 8, containerWidth - 40);
-      const lines = Math.ceil(estimatedWidth / (containerWidth - 40));
-      return { width: estimatedWidth, height: lines * 24 };
+    case 'paragraph': {
+      const text = content || 'Paragraph';
+      const avgCharPx = 8; 
+      const estimatedTextPx = text.length * avgCharPx;
+      const lines = Math.max(1, Math.ceil(estimatedTextPx / containerWidth));
+      return { width: containerWidth, height: lines * 24 };
+    }
 
     case 'button':
       const buttonText = content || 'Button';
