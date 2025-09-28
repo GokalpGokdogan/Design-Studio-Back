@@ -13,11 +13,31 @@ const app = express();
 
 connectDB();
 
-// app.use(cors());
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:3000',
+  'https://www.figma.com',
+  'file://',
+  'null' // For Figma plugin and local files
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true,
+  origin: function (origin, callback) {
+
+    if (!origin) return callback(null, true);
+    
+
+    if (origin === 'null' || origin === 'file://') return callback(null, true);
+    
+    if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+      callback(null, true);
+    } else {
+      console.log('Blocked by CORS:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
 }));
+
 app.use(express.json());
 app.use(cookieParser());
 

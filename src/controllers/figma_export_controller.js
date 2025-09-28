@@ -227,19 +227,7 @@ function convertComponent(component, x, y, width, height, tokens) {
 
     case 'hero':
       return createHeroComponent(baseNode, content, props, style, tokens);
-
-    case 'stats':
-      return createStatsComponent(baseNode, props, style, tokens);
-
-    case 'table':
-      return createTableComponent(baseNode, props, style, tokens);
-
-    case 'badge':
-      return createBadgeComponent(baseNode, content || 'Badge', props, style, tokens);
-
-    case 'image':
-      return createImageComponent(baseNode, props, style, tokens);
-
+      
     default:
       return createPlaceholderComponent(baseNode, role, content);
   }
