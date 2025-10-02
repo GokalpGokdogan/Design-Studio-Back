@@ -12,16 +12,6 @@ async function generateDesign(req, res) {
   }
   
   const model = 'meta-llama/llama-4-scout-17b-16e-instruct'; // 'groq/compound-mini';
-  console.log(SYSTEM_PROMPT)
-  // const response = await groq.chat.completions.create({
-  //   messages: [
-  //     { role: 'system', content: SYSTEM_PROMPT },
-  //     { role: 'user', content: prompt }
-  //   ],
-  //   model: model,
-  //   temperature: 0.3,
-  //   max_tokens: 2000
-  // });
 
   const response = await groq.chat.completions.create({
     messages: [
@@ -34,16 +24,15 @@ async function generateDesign(req, res) {
     response_format: RESPONSE_FORMAT
   });
 
-  console.log(response.choices[0].message.content)
+  // console.log(response.choices[0].message.content)
   let designData;
   try {
     designData = JSON.parse(response.choices[0].message.content);
   } catch (err) {
-    console.error('JSON Parse Error:', err);
+    // console.error('JSON Parse Error:', err);
     return res.status(500).json({ error: 'Failed to parse design data' });
   }
 
-  // ensure meta fields
   if (!designData.meta) designData.meta = {};
   designData.meta.id = designData.meta.id || `design_${Date.now()}`;
   designData.meta.timestamp = new Date().toISOString();
@@ -51,7 +40,7 @@ async function generateDesign(req, res) {
 
   res.json(designData);
 
-  console.log(designData)
+  // console.log(designData)
 }
 
 async function exportFigmaTokens(req, res) {

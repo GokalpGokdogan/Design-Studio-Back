@@ -701,7 +701,6 @@ async function exportToFigma(req, res) {
     // Generate unique export ID
     const exportId = `export_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Store ONLY the canonical design data (no pre-conversion)
     const figmaExport = new FigmaExport({
       exportId,
       designData: {
@@ -744,14 +743,14 @@ async function exportToFigma(req, res) {
   }
 }
 
-// Convert canonical design data to Figma format on-demand
+// Convert design data to Figma format on-demand
 async function getExportData(req, res) {
   try {
     const { exportId } = req.params;
     
     console.log('Fetching and converting design data for ID:', exportId);
     
-    // Find the stored canonical design data
+    // Find the stored design data
     const exportData = await FigmaExport.findOne({ exportId });
     
     if (!exportData) {
@@ -766,7 +765,6 @@ async function getExportData(req, res) {
 
     figmaData = convertToFigmaFormat(exportData.designData.data);
     
-    // Cache the conversion for future requests
     exportData.figmaData = figmaData;
     exportData.conversionVersion = 'v1';
 

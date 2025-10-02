@@ -5,7 +5,7 @@ function newId(prefix) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-// Get all projects for current user (from cookie)
+// Get all projects for current user
 async function getAllProjects(req, res) {
   try {
     const user_id = req.user_id;
@@ -17,7 +17,7 @@ async function getAllProjects(req, res) {
   }
 }
 
-// Get a single project by id (must belong to cookie user)
+// Get a single project by id
 async function getProject(req, res) {
   try {
     const user_id = req.user_id;
@@ -32,7 +32,7 @@ async function getProject(req, res) {
   }
 }
 
-// Create project (belongs to cookie user)
+// Create project
 async function createProject(req, res) {
   try {
     const user_id = req.user_id;
@@ -69,19 +69,17 @@ async function updateProject(req, res) {
 
     const { title, prompt, designData } = req.body || {};
     
-    // Build update object
+
     const updateFields = {};
     
     // Handle title and prompt
     if (title !== undefined) updateFields.title = title;
     if (prompt !== undefined) updateFields.prompt = prompt;
     
-    // Handle designData - store as Mixed type array without deep validation
     if (designData !== undefined) {
-      // Ensure it's an array
       const dataArray = Array.isArray(designData) ? designData : [designData];
       
-      // Basic validation - just check if objects have required top-level fields
+      // Basic validation
       const validData = dataArray.filter(item => 
         item && 
         typeof item === 'object' && 
@@ -90,11 +88,9 @@ async function updateProject(req, res) {
         item.position
       );
       
-      // Store the data as-is without deep processing
       updateFields.designData = validData;
     }
     
-    // Add timestamp
     updateFields.updatedAt = new Date();
 
     // Find existing project first
@@ -105,7 +101,7 @@ async function updateProject(req, res) {
       const updatedProject = await Project.findOneAndUpdate(
         { project_id, user_id },
         { $set: updateFields },
-        { new: true, runValidators: false } // Disable validators for Mixed type
+        { new: true, runValidators: false }
       );
       
       res.json({ project: updatedProject });
@@ -133,7 +129,6 @@ async function updateProject(req, res) {
     console.error('updateProject error:', e);
     console.error('Error details:', e.message);
     
-    // Log the actual data that caused the error for debugging
     if (req.body?.designData) {
       console.error('Design data structure:', JSON.stringify(req.body.designData, null, 2).substring(0, 500));
     }

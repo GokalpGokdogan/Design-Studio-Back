@@ -17,7 +17,7 @@ const getCookieConfig = () => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     };
   } else {
-    // Development mode - use old structure
+    // Development mode
     return {
       httpOnly: true,
       sameSite: 'lax', 
@@ -68,7 +68,7 @@ async function updateUser(req, res) {
   }
 }
 
-// Delete user (and all their projects)
+// Delete user and all their projects
 async function deleteUser(req, res) {
   try {
     const { user_id } = req.params;
@@ -100,7 +100,6 @@ async function loginUser(req, res) {
     const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) return res.status(401).json({ error: 'Invalid email or password' });
 
-    // Use environment-based cookie config
     res.cookie('uid', user.user_id, getCookieConfig());
 
     res.json({ user_id: user.user_id, email: user.email, project_ids: user.project_ids });
